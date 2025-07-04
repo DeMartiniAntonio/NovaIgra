@@ -8,11 +8,15 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
     [SerializeField] private GameObject mainMenu;
+    [SerializeField] private GameObject gamePanel;
     [SerializeField] private GameObject optionsMenu;
+    [SerializeField] private GameManager gameManager;
 
     public void Play()
     {
         mainMenu.SetActive(false);
+        gamePanel.SetActive(true);
+        gameManager.InitializeGame();
     }
 
     public void Options()

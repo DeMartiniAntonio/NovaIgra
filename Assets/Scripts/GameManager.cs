@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Net.NetworkInformation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,10 +9,11 @@ using Random = UnityEngine.Random;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private GameObject pausePanel;
+   
 
     //population, wood, gold, food, stone, iron, tools,
     [Header("RES")]
-    [SerializeField] private int population;
+
     [SerializeField] private int workers;       //rjeseno
     [SerializeField] private int unemployed;    //rjeseno
     [SerializeField] private int wood;          //rjeseno
@@ -40,14 +42,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text farmText;
     [SerializeField] private TMP_Text woodcutterText;
     [SerializeField] private TMP_Text housesText;
+    [SerializeField] private TMP_Text notificationText;
 
     private float timer;
+    bool isGameRunning=false;
 
     private void Update()
     {
         //one min is one day
         TimeOfDay();
-
+        
         if (Input.GetKeyDown(KeyCode.Escape)) {
             Pause();
         }
@@ -55,9 +59,14 @@ public class GameManager : MonoBehaviour
 
     private void TimeOfDay()
     {
+        if (!isGameRunning) {
+            return;
+        }
+
+
         timer += Time.deltaTime;
 
-        if (timer >= 60)
+        if (timer >= 3)
         {
             days++;
             FoodGathering();
@@ -65,16 +74,23 @@ public class GameManager : MonoBehaviour
             WoodProduction();
             FoodConsuprion(1);
             IncreasePopulation();
+            UpdateText();
+            GetMaxPopulation();
             timer = 0;
         }
     }
 
+    public void InitializeGame() {
+        UpdateText();
+        isGameRunning=true;
+    }
+
     private void IncreasePopulation() {
-        if (days % 2 == 0) 
+        if (days % 10 == 0) 
         {
             if (GetMaxPopulation() > Population()) 
             {
-                unemployed += house;
+                unemployed = Math.Min(unemployed + house, GetMaxPopulation());
             }
         }
     }
@@ -97,8 +113,7 @@ public class GameManager : MonoBehaviour
     //number of max house * 4
     private int GetMaxPopulation() 
     {
-        int maxPopulation = house * 4;
-        return maxPopulation;
+        return house * 4;
     }
 
     private void FoodGathering() 
@@ -112,16 +127,41 @@ public class GameManager : MonoBehaviour
             wood -= 10;
             farm++;
             WorkerAssign(2);
+            UpdateText();
+            string text = $"You Have built farm";
+            StartCoroutine(NotificationText(text));
         }
         else if(wood < 10)
         {
-            Debug.Log($"Not enough resources to build Farm, you need {10 - wood} wood");
+            string text = $"Not enough resources to build Farm, you need {10 - wood} wood";
+            StartCoroutine(NotificationText(text));
         }
         else if (!CanAssignWorker(2))
         {
-            Debug.Log($"Not enough resources to build Farm, you need {2-unemployed} workers");
+            string text = $"Not enough resources to build Farm, you need {2-unemployed} workers";
+            StartCoroutine(NotificationText(text));
         }
     }
+
+    public void BuillHouse()
+    {
+        if (wood >= 2)
+        {
+            wood -= 2;
+            house++;
+            
+            UpdateText();
+            string text = $"You Have built house";
+            StartCoroutine(NotificationText(text));
+        }
+        else if (wood < 2)
+        {
+            string text = $"Not enough resources to build House, you need {2 - wood} wood";
+            StartCoroutine(NotificationText(text));
+
+        }
+    }
+
 
     public void BuilldWoodcutter()
     {
@@ -131,18 +171,28 @@ public class GameManager : MonoBehaviour
             iron--;
             woodcutter++;
             WorkerAssign(1);
+            string text = $"You Have built woodcutter";
+            StartCoroutine(NotificationText(text));
+
+            UpdateText();
         }
         else if (wood < 5)
         {
-            Debug.Log($"Not enough resources to build Farm, you need {10 - wood} wood");
+            string text = $"Not enough resources to build Woodcutter, you need {5 - wood} wood";
+            StartCoroutine(NotificationText(text));
+
         }
         else if (iron == 0)
         {
-            Debug.Log($"Not enough resources to build Farm, you need 1 iron");
+            string text = $"Not enough resources to build Woodcutter, you need 1 iron";
+            StartCoroutine(NotificationText(text));
+
         }
         else if (!CanAssignWorker(1))
         {
-            Debug.Log($"Not enough resources to build Farm, you need 1 worker");
+            string text = $"Not enough resources to build Woodcutter, you need 1 worker";
+            StartCoroutine(NotificationText(text));
+
         }
     }
 
@@ -172,10 +222,27 @@ public class GameManager : MonoBehaviour
         return unemployed >= amount;
     }
 
+    public void UpdateText() { 
 
+        //resources
+        populationText.text= $"Population: {Population()}/{GetMaxPopulation()}\n     Workers: {workers}\n     Unemployed: {unemployed}";
+        woodText.text = $"Wood: {wood}";
+        foodText.text = $"Food: {food}";
+        ironText.text = $"Iron: {iron}";
 
+        //buildings
+        farmText.text = $"Farms: {farm}";
+        woodcutterText.text = $"Wood Cutter: {woodcutter}";
+        housesText.text = $"Houses: {house}";
+        daysText.text = $"Days: {days}";
+    }
 
-
+    IEnumerator NotificationText(string text) 
+    {
+        notificationText.text= text;
+        yield return new WaitForSeconds(2);
+        notificationText.text = string.Empty;
+    }
 
     private void Pause() {
 
