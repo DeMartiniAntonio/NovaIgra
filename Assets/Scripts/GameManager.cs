@@ -43,6 +43,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text woodcutterText;
     [SerializeField] private TMP_Text housesText;
     [SerializeField] private TMP_Text notificationText;
+    [SerializeField] private TMP_Text ironMinesText;
 
     private float timer;
     bool isGameRunning=false;
@@ -72,11 +73,24 @@ public class GameManager : MonoBehaviour
             FoodGathering();
             FoodProductions();
             WoodProduction();
+            IronProduction();
             FoodConsuprion(1);
             IncreasePopulation();
             UpdateText();
             GetMaxPopulation();
             timer = 0;
+
+            if(food <= 0 && food >= -100)
+            {
+                string text = $"You have run out of food, your population will start to die of starvation!";
+                StartCoroutine(NotificationText(text));
+            }
+            else if (food <=-100)
+            {
+                string text = $"Your population have gone to Germani! Game ower";
+                StartCoroutine(NotificationText(text));
+                isGameRunning = false;
+            }
         }
     }
 
@@ -143,6 +157,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void BuilldIronMine()
+    {
+        if (wood >= 15 && CanAssignWorker(3))
+        {
+            wood -= 15;
+            ironMines++;
+            WorkerAssign(3);
+            UpdateText();
+            string text = $"You Have built iron mine";
+            StartCoroutine(NotificationText(text));
+        }
+        else if (wood < 10)
+        {
+            string text = $"Not enough resources to build Iron mine, you need {15 - wood} wood";
+            StartCoroutine(NotificationText(text));
+        }
+        else if (!CanAssignWorker(3))
+        {
+            string text = $"Not enough resources to build Farm, you need {3 - unemployed} workers";
+            StartCoroutine(NotificationText(text));
+        }
+    }
+
     public void BuillHouse()
     {
         if (wood >= 2)
@@ -157,7 +194,7 @@ public class GameManager : MonoBehaviour
         else if (wood < 2)
         {
             string text = $"Not enough resources to build House, you need {2 - wood} wood";
-            StartCoroutine(NotificationText(text));
+            NotificationText(text);
 
         }
     }
@@ -201,6 +238,11 @@ public class GameManager : MonoBehaviour
         wood += woodcutter * 2;
     }
 
+    public void IronProduction()
+    {
+        iron += ironMines * 2;
+    }
+
     //TODO: make this method a class
     private void BuildCost(int woodCost, int stoneCost, int workerAssign) {
 
@@ -235,6 +277,7 @@ public class GameManager : MonoBehaviour
         woodcutterText.text = $"Wood Cutter: {woodcutter}";
         housesText.text = $"Houses: {house}";
         daysText.text = $"Days: {days}";
+        ironMinesText.text = $"Iron: {ironMines}";
     }
 
     IEnumerator NotificationText(string text) 
