@@ -56,10 +56,25 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text ironMinesLvlCost;
     [SerializeField] private TMP_Text goldMinesLvlCost;
     [SerializeField] private TMP_Text woodcutterLvlCost;
+    
+    [Header("Zadaca 17.7.")]
+    private const string HIGHSCORE = "HIGHSCORE";
+    private const string PLAYER_NAME = "PLAYERNAME";
+    private int daysCounter;
+    //nalaze se na main menu
+    [SerializeField] private TMP_InputField inputName;
+    [SerializeField] private TMP_Text highscoreText;
 
     private float timer;
     
     bool isGameRunning=false;
+
+
+    //zadaca 17.7.
+    private void Start()
+    {
+        highscoreText.text = $"Highscore: {SaveSystem.GetIntValue(HIGHSCORE)} days\nPlayer: {SaveSystem.GetStringValue(PLAYER_NAME)}";
+    }
 
     private void Update()
     {
@@ -104,6 +119,13 @@ public class GameManager : MonoBehaviour
                 string text = $"Your population have gone to Germani! Game ower";
                 StartCoroutine(NotificationText(text));
                 isGameRunning = false;
+                //zadaca 17.7.
+                if (days > daysCounter)
+                {
+                    daysCounter = days;
+                    SaveSystem.SetIntValue(HIGHSCORE, daysCounter);
+                    SaveSystem.SetStringValue(PLAYER_NAME, inputName.text);
+                }
             }
         }
     }
